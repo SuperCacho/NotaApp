@@ -1,154 +1,215 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NotaApp</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
-<!-- LOGIN -->
-<section id="screen-login" class="screen active">
-    <div class="card card-auth">
-        <h1 class="logo">Nota<span>App</span></h1>
-        <p class="subtitle">Ingresá a tu cuenta</p>
-        <form id="form-login">
-            <label for="login-email">Email</label>
-            <input type="email" id="login-email" required placeholder="tu@email.com">
-            <label for="login-password">Contraseña</label>
-            <input type="password" id="login-password" required minlength="6" placeholder="Mínimo 6 caracteres">
-            <button type="submit" class="btn-principal">Ingresar</button>
-        </form>
-        <p class="mensaje" id="login-mensaje"></p>
-        <p class="enlace">¿No tenés cuenta? <a href="#" id="link-register">Registrate</a></p>
-    </div>
-</section>
-
-<!-- REGISTRO -->
-<section id="screen-register" class="screen">
-    <div class="card card-auth">
-        <h1 class="logo">Nota<span>App</span></h1>
-        <p class="subtitle">Creá tu cuenta</p>
-        <form id="form-register">
-            <label for="reg-nombre">Nombre</label>
-            <input type="text" id="reg-nombre" required placeholder="Tu nombre">
-            <label for="reg-email">Email</label>
-            <input type="email" id="reg-email" required placeholder="tu@email.com">
-            <label for="reg-password">Contraseña</label>
-            <input type="password" id="reg-password" required minlength="6" placeholder="Mínimo 6 caracteres">
-            <label for="reg-rol">Rol</label>
-            <select id="reg-rol">
-                <option value="titular" selected>Titular</option>
-                <option value="asistente">Asistente</option>
-            </select>
-            <button type="submit" class="btn-principal">Registrarme</button>
-        </form>
-        <p class="mensaje" id="register-mensaje"></p>
-        <p class="enlace">¿Ya tenés cuenta? <a href="#" id="link-login">Ingresá</a></p>
-    </div>
-</section>
-
-<!-- PANTALLA PRINCIPAL -->
-<section id="screen-main" class="screen">
-    <header class="topbar">
-        <h1 class="logo">Nota<span>App</span></h1>
-        <div class="user-info">
-            <span id="saludo-nombre">Titular</span>
-            <button id="btn-logout" class="btn-logout">Salir</button>
+    <section id="screen-login" class="screen active">
+        <div class="card card-auth">
+            <h1 class="logo">Nota<span>App</span></h1>
+            <p class="subtitle">Ingresá a tu cuenta</p>
+            <form id="form-login">
+                <label for="login-email">Email</label><input type="email" id="login-email" required
+                    placeholder="tu@email.com">
+                <label for="login-password">Contraseña</label><input type="password" id="login-password" required
+                    minlength="6" placeholder="Mínimo 6 caracteres">
+                <button type="submit" class="btn-principal">Ingresar</button>
+            </form>
+            <p class="mensaje" id="login-mensaje"></p>
+            <p class="enlace">¿No tenés cuenta? <a href="#" id="link-register">Registrate</a></p>
         </div>
-    </header>
-    <div class="container">
-        <div class="buscador">
-            <input type="text" placeholder="🔍  Buscar cuentas, teléfonos, notas...">
+    </section>
+
+    <section id="screen-register" class="screen">
+        <div class="card card-auth">
+            <h1 class="logo">Nota<span>App</span></h1>
+            <p class="subtitle">Creá tu cuenta</p>
+            <form id="form-register">
+                <label>Nombre</label><input type="text" id="reg-nombre" required placeholder="Tu nombre">
+                <label>Email</label><input type="email" id="reg-email" required placeholder="tu@email.com">
+                <label>Contraseña</label><input type="password" id="reg-password" required minlength="6"
+                    placeholder="Mínimo 6 caracteres">
+                <label>Rol</label>
+                <select id="reg-rol">
+                    <option value="titular" selected>Titular</option>
+                    <option value="asistente">Asistente</option>
+                </select>
+                <button type="submit" class="btn-principal">Registrarme</button>
+            </form>
+            <p class="mensaje" id="register-mensaje"></p>
+            <p class="enlace">¿Ya tenés cuenta? <a href="#" id="link-login">Ingresá</a></p>
         </div>
-        <div class="grid-botones">
-            <button class="btn-modulo" id="btn-cuentas">
-                <span class="icono">🔒</span>
-                <span>Cuentas</span>
-            </button>
-            <button class="btn-modulo btn-deshabilitado" type="button">
-                <span class="icono">📞</span>
-                <span>Teléfonos</span>
-                <small>Próximamente</small>
-            </button>
-            <button class="btn-modulo btn-deshabilitado" type="button">
-                <span class="icono">📝</span>
-                <span>Notas</span>
-                <small>Próximamente</small>
-            </button>
-            <button class="btn-modulo btn-deshabilitado" type="button">
-                <span class="icono">⏰</span>
-                <span>Recordatorios</span>
-                <small>Próximamente</small>
-            </button>
-        </div>
-    </div>
-</section>
+    </section>
 
-<!-- CUENTAS -->
-<section id="screen-cuentas" class="screen">
-    <header class="topbar">
-        <div class="header-left">
-            <button id="btn-back-main" class="btn-icono" type="button">←</button>
-            <h1 class="logo">🔒 Cuentas</h1>
-        </div>
-        <button id="btn-nueva-cuenta" class="btn-principal btn-mini" type="button">+ Agregar</button>
-    </header>
-    <div class="container">
-        <div class="filtros">
-            <button class="filtro activo" data-tipo="todas" type="button">Todas</button>
-            <button class="filtro" data-tipo="correo" type="button">Correos</button>
-            <button class="filtro" data-tipo="red_social" type="button">Redes</button>
-            <button class="filtro" data-tipo="streaming" type="button">Streaming</button>
-            <button class="filtro" data-tipo="otro" type="button">Otros</button>
-        </div>
-        <div id="lista-cuentas">
-            <p class="vacio">No tenés cuentas guardadas todavía.</p>
-        </div>
-    </div>
-</section>
-
-<!-- MODAL NUEVA/EDITAR CUENTA -->
-<div id="modal-cuenta" class="modal">
-    <div class="modal-contenido card">
-        <h2 id="modal-titulo">Nueva cuenta</h2>
-        <form id="form-cuenta">
-            <label for="cuenta-sitio">Servicio / Sitio *</label>
-            <input type="text" id="cuenta-sitio" required placeholder="Ej: Netflix, Gmail...">
-
-            <label for="cuenta-login">Usuario o email</label>
-            <input type="text" id="cuenta-login" required placeholder="usuario@mail.com">
-
-            <label for="cuenta-password">Contraseña</label>
-            <input type="password" id="cuenta-password" required placeholder="Ingresá la contraseña">
-            <small class="ayuda">Se guardará cifrada (pendiente Web Crypto)</small>
-
-            <label for="cuenta-tipo">Tipo</label>
-            <select id="cuenta-tipo">
-                <option value="correo">Correo</option>
-                <option value="red_social">Red social</option>
-                <option value="streaming">Streaming</option>
-                <option value="otro">Otro</option>
-            </select>
-
-            <label for="cuenta-estado">Estado</label>
-            <select id="cuenta-estado">
-                <option value="normal">Normal</option>
-                <option value="importante">Importante</option>
-                <option value="revisar">Revisar</option>
-                <option value="urgente">Urgente</option>
-            </select>
-
-            <div class="botones-modal">
-                <button type="button" id="btn-cancelar-cuenta" class="btn-secundario">Cancelar</button>
-                <button type="submit" class="btn-principal">Guardar</button>
+    <section id="screen-main" class="screen">
+        <header class="topbar">
+            <h1 class="logo">Nota<span>App</span></h1>
+            <div class="user-info"><span id="saludo-nombre">Titular</span><button id="btn-logout"
+                    class="btn-logout">Salir</button></div>
+        </header>
+        <div class="container">
+            <div class="buscador"><input type="text" placeholder="🔍  Buscar cuentas, teléfonos, notas..."></div>
+            <div class="grid-botones">
+                <button class="btn-modulo" id="btn-cuentas" type="button"><span
+                        class="icono">🔒</span><span>Cuentas</span></button>
+                <button class="btn-modulo" id="btn-telefonos" type="button"><span
+                        class="icono">📞</span><span>Teléfonos</span></button>
+                <button class="btn-modulo" id="btn-notas" type="button"><span
+                        class="icono">📝</span><span>Notas</span></button>
+                <button class="btn-modulo" id="btn-recordatorios" type="button"><span
+                        class="icono">⏰</span><span>Recordatorios</span></button>
             </div>
-        </form>
-        <p class="mensaje" id="cuenta-mensaje"></p>
-    </div>
-</div>
+        </div>
+    </section>
 
-<script src="js/app.js"></script>
+    <!-- PANTALLAS MODULOS -->
+    <section id="screen-cuentas" class="screen">
+        <header class="topbar">
+            <div class="header-left"><button id="btn-back-main" class="btn-icono" type="button">←</button>
+                <h1 class="logo">🔒 Cuentas</h1>
+            </div><button id="btn-nueva-cuenta" class="btn-principal btn-mini" type="button">+ Agregar</button>
+        </header>
+        <div class="container">
+            <div class="filtros"><button class="filtro activo" data-tipo="todas" type="button">Todas</button><button
+                    class="filtro" data-tipo="correo" type="button">Correos</button><button class="filtro"
+                    data-tipo="red_social" type="button">Redes</button><button class="filtro" data-tipo="streaming"
+                    type="button">Streaming</button></div>
+            <div id="lista-cuentas"></div>
+        </div>
+    </section>
+
+    <section id="screen-telefonos" class="screen">
+        <header class="topbar">
+            <div class="header-left"><button id="btn-back-main-tel" class="btn-icono" type="button">←</button>
+                <h1 class="logo">📞 Teléfonos</h1>
+            </div><button id="btn-nuevo-telefono" class="btn-principal btn-mini" type="button">+ Agregar</button>
+        </header>
+        <div class="container">
+            <div id="lista-telefonos"></div>
+        </div>
+    </section>
+
+    <section id="screen-notas" class="screen">
+        <header class="topbar">
+            <div class="header-left"><button id="btn-back-main-notas" class="btn-icono" type="button">←</button>
+                <h1 class="logo">📝 Notas</h1>
+            </div><button id="btn-nueva-nota" class="btn-principal btn-mini" type="button">+ Agregar</button>
+        </header>
+        <div class="container">
+            <div id="lista-notas"></div>
+        </div>
+    </section>
+
+    <section id="screen-recordatorios" class="screen">
+        <header class="topbar">
+            <div class="header-left"><button id="btn-back-main-rec" class="btn-icono" type="button">←</button>
+                <h1 class="logo">⏰ Recordatorios</h1>
+            </div><button id="btn-nuevo-recordatorio" class="btn-principal btn-mini" type="button">+ Agregar</button>
+        </header>
+        <div class="container">
+            <div id="lista-recordatorios"></div>
+        </div>
+    </section>
+
+    <!-- MODALES -->
+    <div id="modal-cuenta" class="modal">
+        <div class="modal-contenido card">
+            <h2 id="modal-titulo-cuenta">Nueva cuenta</h2>
+            <form id="form-cuenta"><label>Servicio / Sitio *</label><input type="text" id="cuenta-sitio"
+                    required><label>Usuario o email</label><input type="email" id="cuenta-login"
+                    required><label>Contraseña</label><input type="password" id="cuenta-password"
+                    required><label>Tipo</label><select id="cuenta-tipo">
+                    <option value="correo">Correo</option>
+                    <option value="red_social">Red social</option>
+                    <option value="streaming">Streaming</option>
+                    <option value="otro">Otro</option>
+                </select><label>Estado</label><select id="cuenta-estado">
+                    <option value="normal">Normal</option>
+                    <option value="importante">Importante</option>
+                    <option value="revisar">Revisar</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+                <div class="botones-modal"><button type="button" id="btn-cancelar-cuenta"
+                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
+                        id="btn-guardar-cuenta">Guardar</button></div>
+            </form>
+            <p class="mensaje" id="cuenta-mensaje"></p>
+        </div>
+    </div>
+
+    <div id="modal-telefono" class="modal">
+        <div class="modal-contenido card">
+            <h2 id="modal-titulo-tel">Nuevo teléfono</h2>
+            <form id="form-telefono"><label>Nombre *</label><input type="text" id="tel-nombre" required><label>Número
+                    *</label><input type="tel" id="tel-numero" required><label>Categoría</label><select id="tel-tipo">
+                    <option value="familiar">Familiar</option>
+                    <option value="medico">Médico</option>
+                    <option value="emergencia">Emergencia</option>
+                    <option value="servicios">Servicios</option>
+                    <option value="otro">Otro</option>
+                </select><label>Descripción</label><input type="text" id="tel-desc">
+                <div class="botones-modal"><button type="button" id="btn-cancelar-telefono"
+                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
+                        id="btn-guardar-telefono">Guardar</button></div>
+            </form>
+            <p class="mensaje" id="telefono-mensaje"></p>
+        </div>
+    </div>
+
+    <div id="modal-nota" class="modal">
+        <div class="modal-contenido card">
+            <h2 id="modal-titulo-nota">Nueva nota</h2>
+            <form id="form-nota"><label>Título *</label><input type="text" id="nota-titulo" required><label>Contenido
+                    *</label><input type="text" id="nota-contenido" required><label>Categoría</label><select
+                    id="nota-categoria">
+                    <option value="servicios">Servicios</option>
+                    <option value="salud">Salud</option>
+                    <option value="personal">Personal</option>
+                    <option value="otro">Otro</option>
+                </select>
+                <div class="botones-modal"><button type="button" id="btn-cancelar-nota"
+                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
+                        id="btn-guardar-nota">Guardar</button></div>
+            </form>
+            <p class="mensaje" id="nota-mensaje"></p>
+        </div>
+    </div>
+
+    <div id="modal-recordatorio" class="modal">
+        <div class="modal-contenido card">
+            <h2 id="modal-titulo-rec">Nuevo recordatorio</h2>
+            <form id="form-recordatorio"><label>Motivo *</label><input type="text" id="rec-motivo"
+                    required><label>Fecha</label><input type="date" id="rec-fecha" required><label>Hora</label><input
+                    type="time" id="rec-hora" required><label>Estado</label><select id="rec-estado">
+                    <option value="pendiente">Pendiente</option>
+                    <option value="realizado">Realizado</option>
+                    <option value="urgente">Urgente</option>
+                </select>
+                <div class="botones-modal"><button type="button" id="btn-cancelar-rec"
+                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
+                        id="btn-guardar-rec">Guardar</button></div>
+            </form>
+            <p class="mensaje" id="rec-mensaje"></p>
+        </div>
+    </div>
+
+    <div id="modal-confirmar" class="modal">
+        <div class="modal-contenido card" style="text-align: center;">
+            <h2 style="color: #c0392b;">¿Estás seguro?</h2>
+            <p id="confirmar-mensaje" style="margin-bottom: 20px;"></p>
+            <div class="botones-modal"><button type="button" id="btn-cancelar-confirmar"
+                    class="btn-secundario">Cancelar</button><button type="button" id="btn-aceptar-confirmar"
+                    class="btn-principal" style="background: #c0392b;">Eliminar</button></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
 </body>
+
 </html>

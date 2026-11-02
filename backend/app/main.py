@@ -4,27 +4,25 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import auth, cuentas
+# Importamos todos los routers
+from app.routers import auth, cuentas, notas, recordatorios, telefonos
 
 app = FastAPI(title="NotaApp API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "http://127.0.0.1:5501",
-        "http://localhost:5501",
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-    ],
+    allow_origins=["*"],  # Abierto para evitar problemas en la expo
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Conectamos los routers
 app.include_router(auth.router)
 app.include_router(cuentas.router)
+app.include_router(telefonos.router)
+app.include_router(notas.router)
+app.include_router(recordatorios.router)
 
 
 @app.get("/health")
@@ -32,9 +30,9 @@ def health_check():
     return {"status": "ok"}
 
 
-# Configuración para servir el frontend desde Docker
+# Montaje del frontend
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Como este archivo está en backend/app/main.py, subimos dos niveles para llegar a la raíz y entrar a frontend
+# Subimos dos niveles (de app/ a backend/ y luego a la raíz)
 FRONTEND_DIR = os.path.join(BASE_DIR, "..", "..", "frontend")
 
 if os.path.exists(FRONTEND_DIR):
