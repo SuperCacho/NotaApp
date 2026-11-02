@@ -1,0 +1,353 @@
+:root {
+    --bg-cream: #fcf8f2;
+    --text-teal: #2b6a6c;
+    --btn-orange: #d97a4d;
+    --card-white: #ffffff;
+    --text-gray: #666;
+    --badge-cream: #f3e8d8;
+    --badge-text: #a67c52;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Nunito', sans-serif;
+}
+
+body {
+    background-color: var(--bg-cream);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+#app {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+    display: none;
+}
+
+#app.active {
+    display: block;
+}
+
+/* LOGIN */
+#login-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+.logo {
+    font-size: 42px;
+    font-weight: 800;
+    color: var(--text-teal);
+    margin-bottom: 10px;
+}
+
+.logo span {
+    color: var(--btn-orange);
+}
+
+.subtitle {
+    color: var(--text-gray);
+    margin-bottom: 40px;
+    font-size: 15px;
+}
+
+.pin-inputs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.pin-inputs input {
+    width: 45px;
+    height: 55px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 24px;
+    color: var(--text-teal);
+    font-weight: bold;
+    background: var(--card-white);
+    outline: none;
+}
+
+.pin-inputs input:focus {
+    border-color: var(--btn-orange);
+}
+
+.btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 30px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    background-color: var(--btn-orange);
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
+/* DASHBOARD */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-logo {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--text-teal);
+}
+
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+    color: var(--text-gray);
+    font-weight: 600;
+}
+
+.search-bar {
+    background: var(--card-white);
+    padding: 15px 20px;
+    border-radius: 30px;
+    color: #999;
+    font-size: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.grid-menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.menu-card {
+    background: var(--card-white);
+    padding: 25px 10px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-teal);
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    cursor: pointer;
+}
+
+.menu-card:hover {
+    transform: scale(1.02);
+}
+
+.menu-card .icon {
+    font-size: 32px;
+}
+
+.section-title {
+    color: var(--text-teal);
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reminder-card {
+    background: var(--card-white);
+    padding: 15px 20px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.reminder-time {
+    color: var(--btn-orange);
+    font-weight: 800;
+    font-size: 14px;
+    width: 60px;
+}
+
+.reminder-text {
+    flex: 1;
+    font-size: 14px;
+    color: #333;
+}
+
+.badge {
+    background: var(--badge-cream);
+    color: var(--badge-text);
+    padding: 5px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* VISTAS (Listas) */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-title {
+    color: var(--text-teal);
+    font-size: 22px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-add {
+    padding: 8px 16px;
+    border-radius: 20px;
+    width: auto;
+    font-size: 14px;
+}
+
+.item-card {
+    background: var(--card-white);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.item-info h3 {
+    color: var(--text-teal);
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+
+.item-info p {
+    color: var(--text-gray);
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.item-tag {
+    background: var(--badge-cream);
+    color: var(--badge-text);
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    display: inline-block;
+}
+
+.item-actions {
+    display: flex;
+    gap: 15px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--text-gray);
+    font-size: 16px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+}
+
+/* MODALES */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal {
+    background: var(--bg-cream);
+    width: 90%;
+    max-width: 400px;
+    padding: 25px;
+    border-radius: 20px;
+}
+
+.modal h2 {
+    color: var(--text-teal);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: var(--card-white);
+    outline: none;
+    font-family: inherit;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-cancel {
+    background: #e0e0e0;
+    color: #666;
+}

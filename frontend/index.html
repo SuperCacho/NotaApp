@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotaApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Enlace al CSS externo -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+    <!-- LOGIN -->
+    <div id="login-view">
+        <div class="logo">Nota<span>App</span></div>
+        <div class="subtitle">Ingresá tu PIN de 6 dígitos</div>
+        <div class="pin-inputs">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 0)">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 1)">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 2)">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 3)">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 4)">
+            <input type="password" maxlength="1" oninput="moveToNext(this, 5)">
+        </div>
+        <button class="btn" onclick="login()">Desbloquear</button>
+    </div>
+
+    <!-- DASHBOARD PRINCIPAL -->
+    <div id="app">
+        <div id="main-view">
+            <div class="header">
+                <div class="header-logo">NotaApp</div>
+                <div class="user-pill">👤 Titular</div>
+            </div>
+            <div class="search-bar">🔍 Buscar cuentas, teléfonos, notas...</div>
+
+            <div class="grid-menu">
+                <div class="menu-card" onclick="showView('view-cuentas')">
+                    <div class="icon">🔐</div>
+                    <div>Cuentas</div>
+                </div>
+                <div class="menu-card" onclick="showView('view-telefonos')">
+                    <div class="icon">📞</div>
+                    <div>Teléfonos</div>
+                </div>
+                <div class="menu-card" onclick="showView('view-notas')">
+                    <div class="icon">📝</div>
+                    <div>Notas</div>
+                </div>
+                <div class="menu-card" onclick="showView('view-recordatorios')">
+                    <div class="icon">⏰</div>
+                    <div>Recordatorios</div>
+                </div>
+            </div>
+
+            <div class="section-title">⏰ Recordatorios del día</div>
+            <div id="home-recordatorios"><!-- Dinámico --></div>
+        </div>
+
+        <!-- VISTA CUENTAS -->
+        <div id="view-cuentas" style="display:none;">
+            <button class="back-btn" onclick="showView('main-view')">← Volver al menú</button>
+            <div class="view-header">
+                <div class="view-title">🔐 Cuentas</div>
+                <button class="btn btn-add" onclick="openModal('modal-cuenta')">+ Agregar</button>
+            </div>
+            <div id="lista-cuentas"></div>
+        </div>
+
+        <!-- VISTA TELEFONOS -->
+        <div id="view-telefonos" style="display:none;">
+            <button class="back-btn" onclick="showView('main-view')">← Volver al menú</button>
+            <div class="view-header">
+                <div class="view-title">📞 Teléfonos</div>
+                <button class="btn btn-add" onclick="openModal('modal-telefono')">+ Agregar</button>
+            </div>
+            <div id="lista-telefonos"></div>
+        </div>
+
+        <!-- VISTA NOTAS -->
+        <div id="view-notas" style="display:none;">
+            <button class="back-btn" onclick="showView('main-view')">← Volver al menú</button>
+            <div class="view-header">
+                <div class="view-title">📝 Notas protegidas</div>
+                <button class="btn btn-add" onclick="openModal('modal-nota')">+ Agregar</button>
+            </div>
+            <div id="lista-notas"></div>
+        </div>
+
+        <!-- VISTA RECORDATORIOS -->
+        <div id="view-recordatorios" style="display:none;">
+            <button class="back-btn" onclick="showView('main-view')">← Volver al menú</button>
+            <div class="view-header">
+                <div class="view-title">⏰ Recordatorios</div>
+                <button class="btn btn-add" onclick="openModal('modal-recordatorio')">+ Nuevo</button>
+            </div>
+            <div id="lista-recordatorios"></div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+    <!-- Modal Cuenta -->
+    <div class="modal-overlay" id="modal-cuenta">
+        <div class="modal">
+            <h2>➕ Nueva cuenta</h2>
+            <div class="form-group"><label>Servicio / Sitio *</label><input type="text" id="c-sitio"
+                    placeholder="Ej: Netflix"></div>
+            <div class="form-group"><label>Usuario o email</label><input type="text" id="c-login"
+                    placeholder="usuario@mail.com"></div>
+            <div class="form-group"><label>Contraseña</label><input type="password" id="c-pass" placeholder="********">
+            </div>
+            <div class="form-group"><label>Tipo</label>
+                <select id="c-tipo">
+                    <option value="Streaming">Streaming</option>
+                    <option value="Correo">Correo</option>
+                    <option value="Red Social">Red Social</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="modal-actions"><button class="btn btn-cancel"
+                    onclick="closeModal('modal-cuenta')">Cancelar</button><button class="btn"
+                    onclick="guardarCuenta()">Guardar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Telefono -->
+    <div class="modal-overlay" id="modal-telefono">
+        <div class="modal">
+            <h2>➕ Nuevo Teléfono</h2>
+            <div class="form-group"><label>Nombre</label><input type="text" id="t-nombre" placeholder="Ej: Mamá"></div>
+            <div class="form-group"><label>Número</label><input type="text" id="t-numero" placeholder="11 2345-6789">
+            </div>
+            <div class="form-group"><label>Tipo</label>
+                <select id="t-tipo">
+                    <option value="Familiar">Familiar</option>
+                    <option value="Médico">Médico</option>
+                    <option value="Emergencia">Emergencia</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group"><label>Descripción</label><input type="text" id="t-desc" placeholder="Opcional">
+            </div>
+            <div class="modal-actions"><button class="btn btn-cancel"
+                    onclick="closeModal('modal-telefono')">Cancelar</button><button class="btn"
+                    onclick="guardarTelefono()">Guardar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Nota -->
+    <div class="modal-overlay" id="modal-nota">
+        <div class="modal">
+            <h2>➕ Nueva Nota</h2>
+            <div class="form-group"><label>Título</label><input type="text" id="n-titulo"
+                    placeholder="Ej: Seguro del auto"></div>
+            <div class="form-group"><label>Contenido</label><textarea id="n-contenido" rows="3"
+                    placeholder="Detalle..."></textarea></div>
+            <div class="form-group"><label>Categoría</label>
+                <select id="n-categoria">
+                    <option value="Servicios">Servicios</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div class="modal-actions"><button class="btn btn-cancel"
+                    onclick="closeModal('modal-nota')">Cancelar</button><button class="btn"
+                    onclick="guardarNota()">Guardar</button></div>
+        </div>
+    </div>
+
+    <!-- Modal Recordatorio -->
+    <div class="modal-overlay" id="modal-recordatorio">
+        <div class="modal">
+            <h2>➕ Nuevo Recordatorio</h2>
+            <div class="form-group"><label>Motivo</label><input type="text" id="r-motivo"
+                    placeholder="Ej: Llamar a mamá"></div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;"><label>Fecha</label><input type="date" id="r-fecha"></div>
+                <div class="form-group" style="flex:1;"><label>Hora</label><input type="time" id="r-hora"></div>
+            </div>
+            <div class="form-group"><label>Estado</label>
+                <select id="r-estado">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Urgente">Urgente</option>
+                </select>
+            </div>
+            <div class="modal-actions"><button class="btn btn-cancel"
+                    onclick="closeModal('modal-recordatorio')">Cancelar</button><button class="btn"
+                    onclick="guardarRecordatorio()">Guardar</button></div>
+        </div>
+    </div>
+
+    <!-- Enlace al JS externo -->
+    <script src="js/app.js"></script>
+</body>
+
+</html>
