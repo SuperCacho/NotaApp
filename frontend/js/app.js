@@ -1,166 +1,321 @@
-let token = localStorage.getItem('notaapp_token');
-const API = ''; // Relativo
+const API_BASE_URL = "";
 
-// LOGIN
-function moveToNext(current, index) {
-    if (current.value.length === 1) {
-        const inputs = document.querySelectorAll('.pin-inputs input');
-        if (index < 5) inputs[index + 1].focus();
+let cuentaEditandoId = null;
+let cuentasCache = [];
+let filtroActual = "todas";
+
+/* ---------- TOKEN ---------- */
+function guardarToken(t) { localStorage.setItem("notaapp_token", t); }
+function obtenerToken() { return localStorage.getItem("notaapp_token"); }
+function guardarUsuario(u) { localStorage.setItem("notaapp_user", JSON.stringify(u)); }
+function obtenerUsuario() {
+    try { return JSON.parse(localStorage.getItem("notaapp_user") || "null"); }
+    catch { return null; }
+}
+function cerrarSesion() {
+    localStorage.removeItem("notaapp_token");
+    localStorage.removeItem("notaapp_user");
+    mostrarPantalla("screen-login");
+    mostrarMensaje("login-mensaje", "Sesión cerrada correctamente", "ok");
+}
+
+/* ---------- API ---------- */
+async function apiFetch(ruta, opciones = {}) {
+    const token = obtenerToken();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const respuesta = await fetch(`${API_BASE_URL}${ruta}`, {
+        ...opciones,
+        headers: { ...headers, ...(opciones.headers || {}) }
+    });
+
+    if (respuesta.status === 401) {
+        cerrarSesion();
+        mostrarMensaje("login-mensaje", "Tu sesión venció; ingresá nuevamente.", "error");
+        throw new Error("401");
+    }
+
+    if (!respuesta.ok) {
+        const data = await respuesta.json().catch(() => ({}));
+        let detalle = data.detail;
+        if (Array.isArray(detalle)) {
+            detalle = detalle.map(e => e.msg || JSON.stringify(e)).join(", ");
+        }
+        throw new Error(detalle || `Error ${respuesta.status}`);
+    }
+
+    return await respuesta.json();
+}
+
+/* ---------- UI ---------- */
+function mostrarPantalla(id) {
+    document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    window.scrollTo(0, 0);
+}
+function mostrarMensaje(elementId, texto, tipo) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = texto;
+    el.className = "mensaje " + (tipo || "");
+}
+function abrirModal(id) { document.getElementById(id).classList.add("active"); }
+function cerrarModal(id) { document.getElementById(id).classList.remove("active"); }
+
+function escaparHTML(texto) {
+    const div = document.createElement("div");
+    div.textContent = texto == null ? "" : texto;
+    return div.innerHTML;
+}
+
+/* ---------- AUTH ---------- */
+async function registrar() {
+    const nombre = document.getElementById("reg-nombre").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const rol = document.getElementById("reg-rol").value;
+
+    mostrarMensaje("register-mensaje", "Registrando...", "");
+
+    try {
+        const r = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, email, password, rol })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "Error en el registro");
+
+        mostrarMensaje("register-mensaje", "¡Registro exitoso! Ya podés iniciar sesión.", "ok");
+        setTimeout(() => mostrarPantalla("screen-login"), 1200);
+    } catch (e) {
+        mostrarMensaje("register-mensaje", e.message, "error");
     }
 }
 
-async function login() {
-    const btn = document.querySelector('#login-view .btn');
-    btn.innerText = "Cargando...";
+async function iniciarSesion() {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
+
+    mostrarMensaje("login-mensaje", "Ingresando...", "");
+
     try {
-        const res = await fetch('/auth/login', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'lucio@test.com', password: '123456' })
+        const r = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
         });
-        const data = await res.json();
-        if (res.ok) {
-            token = data.access_token;
-            localStorage.setItem('notaapp_token', token);
-            document.getElementById('login-view').style.display = 'none';
-            document.getElementById('app').classList.add('active');
-            cargarTodo();
-        } else { alert("Error"); btn.innerText = "Desbloquear"; }
-    } catch (e) { alert("Error de conexión"); btn.innerText = "Desbloquear"; }
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || "Credenciales inválidas");
+
+        guardarToken(data.access_token);
+        guardarUsuario(data.user);
+
+        document.getElementById("saludo-nombre").textContent = data.user.nombre || "Titular";
+        mostrarPantalla("screen-main");
+    } catch (e) {
+        mostrarMensaje("login-mensaje", e.message, "error");
+    }
 }
 
-// NAVEGACION
-function showView(viewId) {
-    document.querySelectorAll('#app > div').forEach(d => d.style.display = 'none');
-    document.getElementById(viewId).style.display = 'block';
-    if (viewId === 'main-view') cargarTodo();
-    if (viewId === 'view-cuentas') cargarCuentas();
-    if (viewId === 'view-telefonos') cargarTelefonos();
-    if (viewId === 'view-notas') cargarNotas();
-    if (viewId === 'view-recordatorios') cargarRecordatorios();
+async function cargarPerfil() {
+    const u = obtenerUsuario();
+    if (u) document.getElementById("saludo-nombre").textContent = u.nombre || "Titular";
+    try {
+        const perfil = await apiFetch("/auth/me");
+        guardarUsuario(perfil);
+        document.getElementById("saludo-nombre").textContent = perfil.nombre || "Titular";
+    } catch (e) {
+        console.error(e);
+    }
 }
 
-function openModal(id) { document.getElementById(id).classList.add('active'); }
-function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+/* ---------- CUENTAS ---------- */
+function renderCuentas() {
+    const contenedor = document.getElementById("lista-cuentas");
 
-// FETCH HELPERS
-const authHeaders = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` });
+    let lista = cuentasCache;
+    if (filtroActual !== "todas") {
+        lista = lista.filter(c => c.tipo === filtroActual);
+    }
 
-// CUENTAS
+    if (lista.length === 0) {
+        contenedor.innerHTML = `<p class="vacio">No hay cuentas ${filtroActual === "todas" ? "guardadas todavía" : "en esta categoría"}.</p>`;
+        return;
+    }
+
+    contenedor.innerHTML = "";
+    lista.forEach(c => {
+        const div = document.createElement("div");
+        div.className = "cuenta-card";
+
+        const estadoTexto = c.estado.charAt(0).toUpperCase() + c.estado.slice(1);
+
+        div.innerHTML = `
+            <div class="cuenta-info">
+                <h3>${escaparHTML(c.sitio)}</h3>
+                <p>${escaparHTML(c.login)}</p>
+                <p class="puntos">●●●●●●●●</p>
+                <span class="cuenta-estado estado-${c.estado}">${estadoTexto}</span>
+            </div>
+            <div class="acciones">
+                <button class="btn-accion" data-accion="editar" data-id="${c.id}" title="Editar" type="button">✏️</button>
+                <button class="btn-accion peligro" data-accion="eliminar" data-id="${c.id}" title="Eliminar" type="button">🗑️</button>
+            </div>
+        `;
+        contenedor.appendChild(div);
+    });
+}
+
 async function cargarCuentas() {
-    const c = document.getElementById('lista-cuentas');
-    c.innerHTML = '<p style="text-align:center; color:#999;">Cargando...</p>';
-    const res = await fetch('/cuentas', { headers: authHeaders() });
-    const data = await res.json();
-    c.innerHTML = data.length ? '' : '<p style="text-align:center; color:#999;">No hay cuentas.</p>';
-    data.forEach(item => {
-        c.innerHTML += `
-            <div class="item-card">
-                <div class="item-info">
-                    <h3>${item.sitio}</h3><p>${item.login}</p>
-                    <div style="color:#ccc; letter-spacing:2px;">••••••••</div>
-                </div>
-                <div class="item-actions"><span>📋</span><span>✏️</span><span onclick="borrar('cuentas','${item.id}')">🗑️</span></div>
-            </div>`;
-    });
+    const contenedor = document.getElementById("lista-cuentas");
+    contenedor.innerHTML = `<p class="vacio">Cargando...</p>`;
+    try {
+        cuentasCache = await apiFetch("/cuentas/");
+        renderCuentas();
+    } catch (e) {
+        contenedor.innerHTML = `<p class="vacio error">Error: ${escaparHTML(e.message)}</p>`;
+    }
 }
+
+function abrirModalNueva() {
+    cuentaEditandoId = null;
+    document.getElementById("modal-titulo").textContent = "Nueva cuenta";
+    document.getElementById("form-cuenta").reset();
+    document.getElementById("cuenta-password").required = true;
+    mostrarMensaje("cuenta-mensaje", "", "");
+    abrirModal("modal-cuenta");
+}
+
+function abrirModalEditar(id) {
+    const c = cuentasCache.find(x => x.id === id);
+    if (!c) return;
+
+    cuentaEditandoId = id;
+    document.getElementById("modal-titulo").textContent = "Editar cuenta";
+    document.getElementById("cuenta-sitio").value = c.sitio;
+    document.getElementById("cuenta-login").value = c.login;
+    document.getElementById("cuenta-password").value = "";
+    document.getElementById("cuenta-password").required = false;
+    document.getElementById("cuenta-tipo").value = c.tipo;
+    document.getElementById("cuenta-estado").value = c.estado;
+    mostrarMensaje("cuenta-mensaje", "", "");
+    abrirModal("modal-cuenta");
+}
+
 async function guardarCuenta() {
-    const data = { sitio: document.getElementById('c-sitio').value, login: document.getElementById('c-login').value, tipo: document.getElementById('c-tipo').value, password_ciphertext: document.getElementById('c-pass').value };
-    if (!data.sitio) return alert("Falta el sitio");
-    await fetch('/cuentas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
-    closeModal('modal-cuenta'); cargarCuentas();
+    const sitio = document.getElementById("cuenta-sitio").value.trim();
+    const login = document.getElementById("cuenta-login").value.trim();
+    const password = document.getElementById("cuenta-password").value;
+    const tipo = document.getElementById("cuenta-tipo").value;
+    const estado = document.getElementById("cuenta-estado").value;
+
+    mostrarMensaje("cuenta-mensaje", "Guardando...", "");
+
+    try {
+        if (cuentaEditandoId) {
+            const cambios = { sitio, login, tipo, estado };
+            if (password) cambios.password = password;
+            await apiFetch(`/cuentas/${cuentaEditandoId}`, {
+                method: "PUT",
+                body: JSON.stringify(cambios)
+            });
+            mostrarMensaje("cuenta-mensaje", "¡Cuenta actualizada!", "ok");
+        } else {
+            await apiFetch("/cuentas/", {
+                method: "POST",
+                body: JSON.stringify({ sitio, login, password, tipo, estado })
+            });
+            mostrarMensaje("cuenta-mensaje", "¡Cuenta creada!", "ok");
+        }
+
+        setTimeout(() => {
+            cerrarModal("modal-cuenta");
+            cargarCuentas();
+        }, 700);
+    } catch (e) {
+        mostrarMensaje("cuenta-mensaje", e.message, "error");
+    }
 }
 
-// TELEFONOS
-async function cargarTelefonos() {
-    const c = document.getElementById('lista-telefonos');
-    c.innerHTML = 'Cargando...';
-    const res = await fetch('/telefonos', { headers: authHeaders() });
-    const data = await res.json();
-    c.innerHTML = data.length ? '' : '<p style="text-align:center;">No hay teléfonos.</p>';
-    data.forEach(item => {
-        c.innerHTML += `
-            <div class="item-card">
-                <div class="item-info">
-                    <h3>${item.nombre}</h3><p>📱 ${item.numero}</p>
-                    <span class="item-tag">${item.tipo}</span>
-                </div>
-                <div class="item-actions"><span>📋</span><span>✏️</span><span onclick="borrar('telefonos','${item.id}')">🗑️</span></div>
-            </div>`;
+async function eliminarCuenta(id) {
+    const c = cuentasCache.find(x => x.id === id);
+    if (!c) return;
+    if (!confirm(`¿Eliminar "${c.sitio}"?`)) return;
+    try {
+        await apiFetch(`/cuentas/${id}`, { method: "DELETE" });
+        cargarCuentas();
+    } catch (e) {
+        alert("Error al eliminar: " + e.message);
+    }
+}
+
+/* ---------- INIT ---------- */
+document.addEventListener("DOMContentLoaded", () => {
+    // Links auth
+    document.getElementById("link-register").addEventListener("click", e => {
+        e.preventDefault(); mostrarPantalla("screen-register");
     });
-}
-async function guardarTelefono() {
-    const data = { nombre: document.getElementById('t-nombre').value, numero: document.getElementById('t-numero').value, tipo: document.getElementById('t-tipo').value, descripcion: document.getElementById('t-desc').value };
-    await fetch('/telefonos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
-    closeModal('modal-telefono'); cargarTelefonos();
-}
-
-// NOTAS
-async function cargarNotas() {
-    const c = document.getElementById('lista-notas');
-    c.innerHTML = 'Cargando...';
-    const res = await fetch('/notas', { headers: authHeaders() });
-    const data = await res.json();
-    c.innerHTML = data.length ? '' : '<p style="text-align:center;">No hay notas.</p>';
-    data.forEach(item => {
-        c.innerHTML += `
-            <div class="item-card">
-                <div class="item-info">
-                    <h3>${item.titulo}</h3><p>${item.contenido}</p>
-                    <span class="item-tag">${item.categoria}</span>
-                </div>
-                <div class="item-actions"><span>✏️</span><span onclick="borrar('notas','${item.id}')">🗑️</span></div>
-            </div>`;
+    document.getElementById("link-login").addEventListener("click", e => {
+        e.preventDefault(); mostrarPantalla("screen-login");
     });
-}
-async function guardarNota() {
-    const data = { titulo: document.getElementById('n-titulo').value, contenido: document.getElementById('n-contenido').value, categoria: document.getElementById('n-categoria').value };
-    await fetch('/notas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
-    closeModal('modal-nota'); cargarNotas();
-}
 
-// RECORDATORIOS
-async function cargarRecordatorios() {
-    const c = document.getElementById('lista-recordatorios');
-    c.innerHTML = 'Cargando...';
-    const res = await fetch('/recordatorios', { headers: authHeaders() });
-    const data = await res.json();
-    c.innerHTML = data.length ? '' : '<p style="text-align:center;">No hay recordatorios.</p>';
-
-    // También actualizamos el Home
-    const home = document.getElementById('home-recordatorios');
-    home.innerHTML = '';
-
-    data.forEach(item => {
-        const html = `
-            <div class="item-card">
-                <div class="item-info">
-                    <h3>${item.motivo}</h3><p>📅 ${item.fecha} ${item.hora}</p>
-                </div>
-                <span class="badge">${item.estado}</span>
-            </div>`;
-        c.innerHTML += html;
-        home.innerHTML += `<div class="reminder-card"><div class="reminder-time">${item.hora}</div><div class="reminder-text">${item.motivo}</div><div class="badge">${item.estado}</div></div>`;
+    // Forms
+    document.getElementById("form-login").addEventListener("submit", e => {
+        e.preventDefault(); iniciarSesion();
     });
-}
-async function guardarRecordatorio() {
-    const data = { motivo: document.getElementById('r-motivo').value, fecha: document.getElementById('r-fecha').value, hora: document.getElementById('r-hora').value, estado: document.getElementById('r-estado').value };
-    await fetch('/recordatorios', { method: 'POST', headers: authHeaders(), body: JSON.stringify(data) });
-    closeModal('modal-recordatorio'); cargarRecordatorios();
-}
+    document.getElementById("form-register").addEventListener("submit", e => {
+        e.preventDefault(); registrar();
+    });
 
-// BORRAR GENERICO
-async function borrar(endpoint, id) {
-    if (!confirm("¿Seguro que querés eliminarlo?")) return;
-    await fetch(`/${endpoint}/${id}`, { method: 'DELETE', headers: authHeaders() });
-    cargarTodo();
-}
+    // Logout
+    document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
 
-function cargarTodo() {
-    cargarCuentas(); cargarTelefonos(); cargarNotas(); cargarRecordatorios();
-}
+    // Navegación
+    document.getElementById("btn-cuentas").addEventListener("click", () => {
+        mostrarPantalla("screen-cuentas");
+        cargarCuentas();
+    });
+    document.getElementById("btn-back-main").addEventListener("click", () => {
+        mostrarPantalla("screen-main");
+    });
 
-if (token) {
-    document.getElementById('login-view').style.display = 'none';
-    document.getElementById('app').classList.add('active');
-    cargarTodo();
-}
+    // Modal
+    document.getElementById("btn-nueva-cuenta").addEventListener("click", abrirModalNueva);
+    document.getElementById("btn-cancelar-cuenta").addEventListener("click", () => {
+        cerrarModal("modal-cuenta");
+        mostrarMensaje("cuenta-mensaje", "", "");
+    });
+    document.getElementById("form-cuenta").addEventListener("submit", e => {
+        e.preventDefault(); guardarCuenta();
+    });
+
+    // Acciones en tarjetas
+    document.getElementById("lista-cuentas").addEventListener("click", e => {
+        const btn = e.target.closest("button[data-accion]");
+        if (!btn) return;
+        const id = btn.dataset.id;
+        if (btn.dataset.accion === "editar") abrirModalEditar(id);
+        else if (btn.dataset.accion === "eliminar") eliminarCuenta(id);
+    });
+
+    // Filtros
+    document.querySelectorAll(".filtro").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".filtro").forEach(b => b.classList.remove("activo"));
+            btn.classList.add("activo");
+            filtroActual = btn.dataset.tipo;
+            renderCuentas();
+        });
+    });
+
+    // Restaurar sesión
+    const token = obtenerToken();
+    if (token) {
+        mostrarPantalla("screen-main");
+        cargarPerfil();
+    } else {
+        mostrarPantalla("screen-login");
+    }
+});
