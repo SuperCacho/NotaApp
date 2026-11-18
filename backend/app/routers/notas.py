@@ -1,63 +1,58 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.database import supabase
-from app.schemas.notas import NotaCreate, NotaResponse, NotaUpdate
+from app.schemas.notas import NotaCreate, NotaUpdate
 from app.services.security import get_current_profile
 
 router = APIRouter(prefix="/notas", tags=["notas"])
 
 
-@router.get("/", response_model=list[NotaResponse])
-def listar_notas(profile: dict = Depends(get_current_profile)):
-    try:
-        result = (
-            supabase.table("notas").select("*").eq("owner_id", profile["id"]).execute()
-        )
-        return result.data or []
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/")
+def get_notas(profile: dict = Depends(get_current_profile)):
+    res = (
+        supabase.table("notas").select("*").eq("user_id", str(profile["id"])).execute()
+    )
+    return res.data
 
 
-@router.post("/", response_model=NotaResponse)
-def crear_nota(req: NotaCreate, profile: dict = Depends(get_current_profile)):
-    try:
-        data = {
-            "owner_id": profile["id"],
-            "titulo": req.titulo,
-            "contenido": req.contenido,
-            "categoria": req.categoria,
-        }
-        result = supabase.table("notas").insert(data).execute()
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.post("/")
+def create_nota(nota: NotaCreate, profile: dict = Depends(get_current_profile)):
+    data = nota.model_dump()
+    data["user_id"] = str(profile["id"])
+    res = supabase.table("notas").insert(data).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="No se pudo crear la nota")
+    return res.data[0]
 
 
-@router.put("/{nota_id}", response_model=NotaResponse)
-def actualizar_nota(
-    nota_id: str, req: NotaUpdate, profile: dict = Depends(get_current_profile)
+@router.put("/{nota_id}")
+def update_nota(
+    nota_id: str, nota: NotaUpdate, profile: dict = Depends(get_current_profile)
 ):
-    try:
-        cambios = req.dict(exclude_unset=True)
-        if not cambios:
-            raise HTTPException(status_code=400, detail="Sin cambios")
-        result = (
-            supabase.table("notas")
-            .update(cambios)
-            .eq("id", nota_id)
-            .eq("owner_id", profile["id"])
-            .execute()
-        )
-        if not result.data:
-            raise HTTPException(status_code=404, detail="No encontrado")
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    existe = (
+        supabase.table("notas")
+        .select("id")
+        .eq("id", nota_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+    data = nota.model_dump(exclude_unset=True)
+    res = supabase.table("notas").update(data).eq("id", nota_id).execute()
+    return res.data[0]
 
 
 @router.delete("/{nota_id}")
-def eliminar_nota(nota_id: str, profile: dict = Depends(get_current_profile)):
-    supabase.table("notas").delete().eq("id", nota_id).eq(
-        "owner_id", profile["id"]
-    ).execute()
-    return {"message": "Eliminado"}
+def delete_nota(nota_id: str, profile: dict = Depends(get_current_profile)):
+    existe = (
+        supabase.table("notas")
+        .select("id")
+        .eq("id", nota_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Nota no encontrada")
+    supabase.table("notas").delete().eq("id", nota_id).execute()
+    return {"message": "Nota eliminada"}

@@ -4,15 +4,17 @@ from pydantic import BaseModel, Field
 
 
 class NotaCreate(BaseModel):
-    titulo: str = Field(..., min_length=1, max_length=150)
+    titulo: str = Field(..., min_length=1, max_length=200)
     contenido: str = Field(..., min_length=1)
-    categoria: str = Field(..., pattern="^(servicios|salud|personal|otro)$")
+    categoria: str = Field(..., pattern="^(personal|salud|servicios|estudio|otro)$")
 
 
 class NotaUpdate(BaseModel):
-    titulo: str | None = Field(None, min_length=1, max_length=150)
+    titulo: str | None = Field(None, min_length=1, max_length=200)
     contenido: str | None = Field(None, min_length=1)
-    categoria: str | None = Field(None, pattern="^(servicios|salud|personal|otro)$")
+    categoria: str | None = Field(
+        None, pattern="^(personal|salud|servicios|estudio|otro)$"
+    )
 
 
 class NotaResponse(BaseModel):
@@ -20,4 +22,5 @@ class NotaResponse(BaseModel):
     titulo: str
     contenido: str
     categoria: str
+    user_id: str
     created_at: datetime | None = None

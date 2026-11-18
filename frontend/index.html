@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NotaApp</title>
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -15,10 +16,10 @@
             <h1 class="logo">Nota<span>App</span></h1>
             <p class="subtitle">Ingresá a tu cuenta</p>
             <form id="form-login">
-                <label for="login-email">Email</label><input type="email" id="login-email" required
-                    placeholder="tu@email.com">
-                <label for="login-password">Contraseña</label><input type="password" id="login-password" required
-                    minlength="6" placeholder="Mínimo 6 caracteres">
+                <label for="login-email">Email o usuario</label>
+                <input type="text" id="login-email" required placeholder="tu@email.com o usuario">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" required minlength="8" placeholder="Mínimo 8 caracteres">
                 <button type="submit" class="btn-principal">Ingresar</button>
             </form>
             <p class="mensaje" id="login-mensaje"></p>
@@ -31,10 +32,14 @@
             <h1 class="logo">Nota<span>App</span></h1>
             <p class="subtitle">Creá tu cuenta</p>
             <form id="form-register">
-                <label>Nombre</label><input type="text" id="reg-nombre" required placeholder="Tu nombre">
-                <label>Email</label><input type="email" id="reg-email" required placeholder="tu@email.com">
-                <label>Contraseña</label><input type="password" id="reg-password" required minlength="6"
-                    placeholder="Mínimo 6 caracteres">
+                <label>Nombre</label>
+                <input type="text" id="reg-nombre" required placeholder="Tu nombre">
+                <label>Nombre de usuario</label>
+                <input type="text" id="reg-username" required minlength="3" placeholder="Ej: lucio123">
+                <label>Email</label>
+                <input type="email" id="reg-email" required placeholder="tu@email.com">
+                <label>Contraseña</label>
+                <input type="password" id="reg-password" required minlength="8" placeholder="Mínimo 8 caracteres">
                 <label>Rol</label>
                 <select id="reg-rol">
                     <option value="titular" selected>Titular</option>
@@ -47,28 +52,54 @@
         </div>
     </section>
 
-    <section id="screen-main" class="screen">
-        <header class="topbar">
-            <h1 class="logo">Nota<span>App</span></h1>
-            <div class="user-info"><span id="saludo-nombre">Titular</span><button id="btn-logout"
-                    class="btn-logout">Salir</button></div>
-        </header>
-        <div class="container">
-            <div class="buscador"><input type="text" placeholder="🔍  Buscar cuentas, teléfonos, notas..."></div>
-            <div class="grid-botones">
-                <button class="btn-modulo" id="btn-cuentas" type="button"><span
-                        class="icono">🔒</span><span>Cuentas</span></button>
-                <button class="btn-modulo" id="btn-telefonos" type="button"><span
-                        class="icono">📞</span><span>Teléfonos</span></button>
-                <button class="btn-modulo" id="btn-notas" type="button"><span
-                        class="icono">📝</span><span>Notas</span></button>
-                <button class="btn-modulo" id="btn-recordatorios" type="button"><span
-                        class="icono">⏰</span><span>Recordatorios</span></button>
-            </div>
+    <section id="screen-main" class="screen active">
+        <div class="app-layout">
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <i class="fa-solid fa-book"></i> Nota<span><i class="fa-solid fa-pen"></i>App</span>
+                </div>
+                <div class="sidebar-profile">
+                    <div class="avatar" id="sidebar-avatar">U</div>
+                    <div class="profile-info">
+                        <div class="name" id="sidebar-nombre">Usuario</div>
+                        <div class="role" id="sidebar-rol">Titular</div>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <button class="nav-item active" id="nav-inicio"><i class="fa-solid fa-house"></i> Inicio</button>
+                    <button class="nav-item" id="btn-cuentas"><i class="fa-solid fa-lock"></i> Cuentas</button>
+                    <button class="nav-item" id="btn-telefonos"><i class="fa-solid fa-phone"></i> Teléfonos</button>
+                    <button class="nav-item" id="btn-notas"><i class="fa-solid fa-pen-to-square"></i> Notas</button>
+                    <button class="nav-item" id="btn-recordatorios"><i class="fa-solid fa-clock"></i>
+                        Recordatorios</button>
+                </nav>
+                <div class="sidebar-bottom">
+                    <button class="nav-item conexion" id="btn-conexion"><i class="fa-solid fa-users"></i> Conexión
+                        Familiar</button>
+                    <button class="nav-item logout" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i>
+                        Cerrar sesión</button>
+                </div>
+            </aside>
+            <main class="main-content">
+                <header class="main-header">
+                    <h2>Hola, <span id="saludo-nombre">Usuario</span> 👋</h2>
+                    <p>¿Qué querés gestionar hoy?</p>
+                </header>
+                <div class="buscador-global">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Buscar en todas tus notas, cuentas y contactos...">
+                </div>
+                <section class="recent-activity">
+                    <h3>Últimas acciones</h3>
+                    <div class="empty-state">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <p>Acá va a aparecer lo último que agregaste (cuentas, notas, etc).</p>
+                    </div>
+                </section>
+            </main>
         </div>
     </section>
 
-    <!-- PANTALLAS MODULOS -->
     <section id="screen-cuentas" class="screen">
         <header class="topbar">
             <div class="header-left"><button id="btn-back-main" class="btn-icono" type="button">←</button>
@@ -76,10 +107,12 @@
             </div><button id="btn-nueva-cuenta" class="btn-principal btn-mini" type="button">+ Agregar</button>
         </header>
         <div class="container">
-            <div class="filtros"><button class="filtro activo" data-tipo="todas" type="button">Todas</button><button
-                    class="filtro" data-tipo="correo" type="button">Correos</button><button class="filtro"
-                    data-tipo="red_social" type="button">Redes</button><button class="filtro" data-tipo="streaming"
-                    type="button">Streaming</button></div>
+            <div class="filtros">
+                <button class="filtro activo" data-tipo="todas" type="button">Todas</button>
+                <button class="filtro" data-tipo="correo" type="button">Correos</button>
+                <button class="filtro" data-tipo="red_social" type="button">Redes</button>
+                <button class="filtro" data-tipo="streaming" type="button">Streaming</button>
+            </div>
             <div id="lista-cuentas"></div>
         </div>
     </section>
@@ -121,23 +154,35 @@
     <div id="modal-cuenta" class="modal">
         <div class="modal-contenido card">
             <h2 id="modal-titulo-cuenta">Nueva cuenta</h2>
-            <form id="form-cuenta"><label>Servicio / Sitio *</label><input type="text" id="cuenta-sitio"
-                    required><label>Usuario o email</label><input type="email" id="cuenta-login"
-                    required><label>Contraseña</label><input type="password" id="cuenta-password"
-                    required><label>Tipo</label><select id="cuenta-tipo">
+            <form id="form-cuenta">
+                <label>Servicio / Sitio *
+                    <span class="tooltip-container" onclick="toggleTooltip(this)">?<span class="tooltip-text">Escribí el
+                            nombre de la app o página web (Ej: Gmail, Netflix).</span></span>
+                </label>
+                <input type="text" id="cuenta-sitio" required>
+
+                <label>Usuario o email
+                    <span class="tooltip-container" onclick="toggleTooltip(this)">?<span class="tooltip-text">Podés
+                            ingresar tu correo electrónico o tu nombre de usuario.</span></span>
+                </label>
+                <input type="text" id="cuenta-login" required>
+
+                <label>Contraseña</label><input type="password" id="cuenta-password" required>
+                <label>Tipo</label><select id="cuenta-tipo">
                     <option value="correo">Correo</option>
                     <option value="red_social">Red social</option>
                     <option value="streaming">Streaming</option>
                     <option value="otro">Otro</option>
-                </select><label>Estado</label><select id="cuenta-estado">
+                </select>
+                <label>Estado</label><select id="cuenta-estado">
                     <option value="normal">Normal</option>
                     <option value="importante">Importante</option>
                     <option value="revisar">Revisar</option>
-                    <option value="urgente">Urgente</option>
                 </select>
-                <div class="botones-modal"><button type="button" id="btn-cancelar-cuenta"
-                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
-                        id="btn-guardar-cuenta">Guardar</button></div>
+                <div class="botones-modal">
+                    <button type="button" id="btn-cancelar-cuenta" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-principal" id="btn-guardar-cuenta">Guardar</button>
+                </div>
             </form>
             <p class="mensaje" id="cuenta-mensaje"></p>
         </div>
@@ -146,17 +191,21 @@
     <div id="modal-telefono" class="modal">
         <div class="modal-contenido card">
             <h2 id="modal-titulo-tel">Nuevo teléfono</h2>
-            <form id="form-telefono"><label>Nombre *</label><input type="text" id="tel-nombre" required><label>Número
-                    *</label><input type="tel" id="tel-numero" required><label>Categoría</label><select id="tel-tipo">
+            <form id="form-telefono">
+                <label>Nombre *</label><input type="text" id="tel-nombre" required>
+                <label>Número *</label><input type="tel" id="tel-numero" required>
+                <label>Categoría</label><select id="tel-tipo">
                     <option value="familiar">Familiar</option>
                     <option value="medico">Médico</option>
                     <option value="emergencia">Emergencia</option>
                     <option value="servicios">Servicios</option>
                     <option value="otro">Otro</option>
-                </select><label>Descripción</label><input type="text" id="tel-desc">
-                <div class="botones-modal"><button type="button" id="btn-cancelar-telefono"
-                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
-                        id="btn-guardar-telefono">Guardar</button></div>
+                </select>
+                <label>Descripción</label><input type="text" id="tel-desc">
+                <div class="botones-modal">
+                    <button type="button" id="btn-cancelar-telefono" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-principal" id="btn-guardar-telefono">Guardar</button>
+                </div>
             </form>
             <p class="mensaje" id="telefono-mensaje"></p>
         </div>
@@ -165,17 +214,25 @@
     <div id="modal-nota" class="modal">
         <div class="modal-contenido card">
             <h2 id="modal-titulo-nota">Nueva nota</h2>
-            <form id="form-nota"><label>Título *</label><input type="text" id="nota-titulo" required><label>Contenido
-                    *</label><input type="text" id="nota-contenido" required><label>Categoría</label><select
-                    id="nota-categoria">
-                    <option value="servicios">Servicios</option>
-                    <option value="salud">Salud</option>
-                    <option value="personal">Personal</option>
-                    <option value="otro">Otro</option>
+            <form id="form-nota">
+                <label>Título *</label><input type="text" id="nota-titulo" required>
+                <label>Contenido *</label><input type="text" id="nota-contenido" required>
+                <label>Categoría y Color
+                    <span class="tooltip-container" onclick="toggleTooltip(this)">?<span
+                            class="tooltip-text"><b>Significado de los colores:</b><br>🟢 Verde: Personal<br>🔵 Azul:
+                            Salud<br>🟠 Naranja: Servicios<br>🟣 Violeta: Estudio<br>⚪ Gris: Otro</span></span>
+                </label>
+                <select id="nota-categoria">
+                    <option value="personal">🟢 Personal</option>
+                    <option value="salud">🔵 Salud</option>
+                    <option value="servicios">🟠 Servicios</option>
+                    <option value="estudio">🟣 Estudio</option>
+                    <option value="otro">⚪ Otro</option>
                 </select>
-                <div class="botones-modal"><button type="button" id="btn-cancelar-nota"
-                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
-                        id="btn-guardar-nota">Guardar</button></div>
+                <div class="botones-modal">
+                    <button type="button" id="btn-cancelar-nota" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-principal" id="btn-guardar-nota">Guardar</button>
+                </div>
             </form>
             <p class="mensaje" id="nota-mensaje"></p>
         </div>
@@ -184,16 +241,19 @@
     <div id="modal-recordatorio" class="modal">
         <div class="modal-contenido card">
             <h2 id="modal-titulo-rec">Nuevo recordatorio</h2>
-            <form id="form-recordatorio"><label>Motivo *</label><input type="text" id="rec-motivo"
-                    required><label>Fecha</label><input type="date" id="rec-fecha" required><label>Hora</label><input
-                    type="time" id="rec-hora" required><label>Estado</label><select id="rec-estado">
+            <form id="form-recordatorio">
+                <label>Motivo *</label><input type="text" id="rec-motivo" required>
+                <label>Fecha</label><input type="date" id="rec-fecha" required>
+                <label>Hora</label><input type="time" id="rec-hora" required>
+                <label>Estado</label><select id="rec-estado">
                     <option value="pendiente">Pendiente</option>
                     <option value="realizado">Realizado</option>
                     <option value="urgente">Urgente</option>
                 </select>
-                <div class="botones-modal"><button type="button" id="btn-cancelar-rec"
-                        class="btn-secundario">Cancelar</button><button type="submit" class="btn-principal"
-                        id="btn-guardar-rec">Guardar</button></div>
+                <div class="botones-modal">
+                    <button type="button" id="btn-cancelar-rec" class="btn-secundario">Cancelar</button>
+                    <button type="submit" class="btn-principal" id="btn-guardar-rec">Guardar</button>
+                </div>
             </form>
             <p class="mensaje" id="rec-mensaje"></p>
         </div>
@@ -201,11 +261,13 @@
 
     <div id="modal-confirmar" class="modal">
         <div class="modal-contenido card" style="text-align: center;">
-            <h2 style="color: #c0392b;">¿Estás seguro?</h2>
+            <h2 style="color: var(--color-error);">¿Estás seguro?</h2>
             <p id="confirmar-mensaje" style="margin-bottom: 20px;"></p>
-            <div class="botones-modal"><button type="button" id="btn-cancelar-confirmar"
-                    class="btn-secundario">Cancelar</button><button type="button" id="btn-aceptar-confirmar"
-                    class="btn-principal" style="background: #c0392b;">Eliminar</button></div>
+            <div class="botones-modal">
+                <button type="button" id="btn-cancelar-confirmar" class="btn-secundario">Cancelar</button>
+                <button type="button" id="btn-aceptar-confirmar" class="btn-principal"
+                    style="background: var(--color-error);">Eliminar</button>
+            </div>
         </div>
     </div>
 

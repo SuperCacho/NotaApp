@@ -1,27 +1,57 @@
-from fastapi import HTTPException, Header, Depends
+import os
+from datetime import UTC, datetime, timedelta
+
+import jwt
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from passlib.context import CryptContext
+
 from app.database import supabase
 
+# Configuración de seguridad
+SECRET_KEY = os.getenv("JWT_SECRET", "super-secret-key-cambiame-en-produccion")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_HOURS = 8  # Token de 8 horas
 
-async def get_current_user(authorization: str = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Falta token de autenticacion")
+# ACÁ EL CAMBIO: Usamos pbkdf2_sha256 en vez de bcrypt
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
-    token = authorization.replace("Bearer ", "")
+# Herramienta para leer el token
+security_scheme = HTTPBearer()
 
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(data: dict) -> str:
+    to_encode = data.copy()
+    expire = datetime.now(UTC) + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS)
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def get_current_profile(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+) -> dict:
+    token = credentials.credentials
     try:
-        user_response = supabase.auth.get_user(token)
-        if not user_response or not user_response.user:
-            raise HTTPException(status_code=401, detail="Token invalido")
-        return user_response.user
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token invalido o expirado")
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        profile_id = payload.get("sub")
+        if profile_id is None:
+            raise HTTPException(status_code=401, detail="Token inválido")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="La sesión ha expirado")
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
 
+    # Buscamos al usuario en la base de datos por su ID
+    res = supabase.table("profiles").select("*").eq("id", profile_id).execute()
+    if not res.data:
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
-async def get_current_profile(user=Depends(get_current_user)):
-    try:
-        result = supabase.table("profiles").select("*").eq("auth_id", user.id).single().execute()
-        if not result.data:
-            raise HTTPException(status_code=404, detail="Perfil no encontrado")
-        return result.data
-    except Exception:
-        raise HTTPException(status_code=404, detail="Perfil no encontrado")
+    return res.data[0]

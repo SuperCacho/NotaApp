@@ -3,11 +3,29 @@ let cuentasCache = [], telefonosCache = [], notasCache = [], recordatoriosCache 
 let filtroActual = "todas", accionConfirmada = null;
 let cuentaEditandoId = null, telefonoEditandoId = null, notaEditandoId = null, recordatorioEditandoId = null;
 
+function toggleTooltip(element) {
+    document.querySelectorAll('.tooltip-container').forEach(el => {
+        if (el !== element) el.classList.remove('active');
+    });
+    element.classList.toggle('active');
+}
+document.addEventListener('click', function (event) {
+    if (!event.target.closest('.tooltip-container')) {
+        document.querySelectorAll('.tooltip-container').forEach(el => el.classList.remove('active'));
+    }
+});
+
 function guardarToken(t) { localStorage.setItem("notaapp_token", t); }
 function obtenerToken() { return localStorage.getItem("notaapp_token"); }
 function guardarUsuario(u) { localStorage.setItem("notaapp_user", JSON.stringify(u)); }
 function obtenerUsuario() { try { return JSON.parse(localStorage.getItem("notaapp_user") || "null"); } catch { return null; } }
-function cerrarSesion() { localStorage.removeItem("notaapp_token"); localStorage.removeItem("notaapp_user"); mostrarPantalla("screen-login"); }
+
+function cerrarSesion() {
+    localStorage.removeItem("notaapp_token");
+    localStorage.removeItem("notaapp_user");
+    cuentasCache = []; telefonosCache = []; notasCache = []; recordatoriosCache = [];
+    mostrarPantalla("screen-login");
+}
 
 function mostrarPantalla(id) { document.querySelectorAll(".screen").forEach(s => s.classList.remove("active")); document.getElementById(id).classList.add("active"); window.scrollTo(0, 0); }
 function mostrarMensaje(id, texto, tipo) { const el = document.getElementById(id); if (el) { el.textContent = texto; el.className = "mensaje " + (tipo || ""); } }
@@ -20,34 +38,70 @@ function desactivarBoton(btn) { btn.innerHTML = btn.dataset.textoOriginal; btn.d
 function mostrarSpinnerLista(id) { const c = document.getElementById(id); if (c) c.innerHTML = `<div class="cargando-box"><span class="spinner grande"></span></div>`; }
 
 async function apiFetch(ruta, opciones = {}) {
-    const token = obtenerToken(); const headers = { "Content-Type": "application/json" };
+    const token = obtenerToken();
+    const headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
     const r = await fetch(`${API_BASE_URL}${ruta}`, { ...opciones, headers: { ...headers, ...(opciones.headers || {}) } });
-    if (r.status === 401) { cerrarSesion(); throw new Error("Sesión vencida"); }
-    if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || `Error ${r.status}`); }
+
+    if (r.status === 401) {
+        cerrarSesion();
+        throw new Error("Sesión vencida. Ingresá de nuevo.");
+    }
+
+    if (!r.ok) {
+        let mensaje = "Error interno del servidor. Revisá la terminal.";
+        try {
+            const d = await r.json();
+            if (typeof d.detail === "string") {
+                mensaje = d.detail;
+            } else if (Array.isArray(d.detail)) {
+                mensaje = d.detail.map(e => e.msg).join(". ");
+            }
+        } catch (err) {
+            mensaje = `Error interno (${r.status}). Contactá al soporte.`;
+        }
+        throw new Error(mensaje);
+    }
     return await r.json();
 }
 
 async function iniciarSesion(e) {
     e.preventDefault(); const btn = e.target.querySelector("button");
-    const email = document.getElementById("login-email").value.trim(); const password = document.getElementById("login-password").value;
+    const identifier = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value;
     activarBoton(btn, "Ingresando..."); mostrarMensaje("login-mensaje", "", "");
     try {
-        const r = await fetch(`${API_BASE_URL}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
-        const data = await r.json(); if (!r.ok) throw new Error(data.detail || "Credenciales inválidas");
+        const r = await fetch(`${API_BASE_URL}/auth/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ identifier, password }) });
+        const data = await r.json();
+        if (!r.ok) throw new Error(typeof data.detail === 'string' ? data.detail : "Error en el ingreso");
+
         guardarToken(data.access_token); guardarUsuario(data.user);
-        document.getElementById("saludo-nombre").textContent = data.user.nombre || "Titular"; mostrarPantalla("screen-main");
+        document.getElementById("saludo-nombre").textContent = data.user.nombre || "Usuario";
+        document.getElementById("sidebar-nombre").textContent = data.user.nombre || "Usuario";
+        document.getElementById("sidebar-rol").textContent = data.user.rol || "Titular";
+        document.getElementById("sidebar-avatar").textContent = (data.user.nombre || "U").charAt(0).toUpperCase();
+
+        mostrarPantalla("screen-main");
     } catch (e) { mostrarMensaje("login-mensaje", e.message, "error"); } finally { desactivarBoton(btn); }
 }
 
 async function registrar(e) {
     e.preventDefault(); const btn = e.target.querySelector("button");
-    const nombre = document.getElementById("reg-nombre").value.trim(); const email = document.getElementById("reg-email").value.trim();
-    const password = document.getElementById("reg-password").value; const rol = document.getElementById("reg-rol").value;
+    const nombre = document.getElementById("reg-nombre").value.trim();
+    const username = document.getElementById("reg-username").value.trim();
+    const email = document.getElementById("reg-email").value.trim();
+    const password = document.getElementById("reg-password").value;
+    const rol = document.getElementById("reg-rol").value;
     activarBoton(btn, "Registrando...");
     try {
-        const r = await fetch(`${API_BASE_URL}/auth/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre, email, password, rol }) });
-        if (!r.ok) { const d = await r.json(); throw new Error(d.detail || "Error"); }
+        const r = await fetch(`${API_BASE_URL}/auth/register`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nombre, username, email, password, rol }) });
+        if (!r.ok) {
+            const d = await r.json();
+            let msg = "Error";
+            if (typeof d.detail === "string") msg = d.detail;
+            else if (Array.isArray(d.detail)) msg = d.detail.map(err => err.msg).join(". ");
+            throw new Error(msg);
+        }
         mostrarMensaje("register-mensaje", "¡Registrado! Ingresá.", "ok"); setTimeout(() => mostrarPantalla("screen-login"), 1500);
     } catch (e) { mostrarMensaje("register-mensaje", e.message, "error"); } finally { desactivarBoton(btn); }
 }
@@ -109,9 +163,19 @@ async function cargarNotas() {
     try {
         notasCache = await apiFetch("/notas/"); const c = document.getElementById("lista-notas");
         if (notasCache.length === 0) { c.innerHTML = `<p class="vacio">No hay notas.</p>`; return; }
+
+        const emojis = { personal: '🟢', salud: '🔵', servicios: '🟠', estudio: '🟣', otro: '⚪' };
+
         c.innerHTML = ""; notasCache.forEach(x => {
-            const d = document.createElement("div"); d.className = "cuenta-card";
-            d.innerHTML = `<div class="cuenta-info"><h3>${escaparHTML(x.titulo)}</h3><p>${escaparHTML(x.contenido)}</p><span class="cuenta-estado estado-normal">${escaparHTML(x.categoria)}</span></div><div class="acciones"><button class="btn-accion" data-accion="editar-nota" data-id="${x.id}" type="button">✏️</button><button class="btn-accion peligro" data-accion="eliminar-nota" data-id="${x.id}" type="button">🗑️</button></div>`;
+            const d = document.createElement("div");
+            d.className = `cuenta-card nota-${x.categoria}`;
+            d.innerHTML = `<div class="cuenta-info">
+                <h3>${escaparHTML(x.titulo)} <span>${emojis[x.categoria] || '⚪'}</span></h3>
+                <p>${escaparHTML(x.contenido)}</p>
+            </div>
+            <div class="acciones">
+                <button class="btn-accion" data-accion="editar-nota" data-id="${x.id}" type="button">✏️</button><button class="btn-accion peligro" data-accion="eliminar-nota" data-id="${x.id}" type="button">🗑️</button>
+            </div>`;
             c.appendChild(d);
         });
     } catch (e) { document.getElementById("lista-notas").innerHTML = `<p class="vacio error">${e.message}</p>`; }
@@ -159,12 +223,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("link-login").addEventListener("click", e => { e.preventDefault(); mostrarPantalla("screen-login"); });
     document.getElementById("form-login").addEventListener("submit", iniciarSesion);
     document.getElementById("form-register").addEventListener("submit", registrar);
-    document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
 
     document.getElementById("btn-cuentas").addEventListener("click", () => { mostrarPantalla("screen-cuentas"); cargarCuentas(); });
     document.getElementById("btn-telefonos").addEventListener("click", () => { mostrarPantalla("screen-telefonos"); cargarTelefonos(); });
     document.getElementById("btn-notas").addEventListener("click", () => { mostrarPantalla("screen-notas"); cargarNotas(); });
     document.getElementById("btn-recordatorios").addEventListener("click", () => { mostrarPantalla("screen-recordatorios"); cargarRecordatorios(); });
+
+    document.getElementById("btn-conexion").addEventListener("click", () => {
+        alert("Acá irá el sistema de vinculación Titular ↔ Asistente (próximamente).");
+    });
+    document.getElementById("btn-logout").addEventListener("click", cerrarSesion);
 
     document.getElementById("btn-back-main").addEventListener("click", () => mostrarPantalla("screen-main"));
     document.getElementById("btn-back-main-tel").addEventListener("click", () => mostrarPantalla("screen-main"));
@@ -187,26 +255,25 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("btn-cancelar-rec").addEventListener("click", () => cerrarModal("modal-recordatorio"));
     document.getElementById("form-recordatorio").addEventListener("submit", guardarRecordatorio);
 
-    // Delegación de eventos para editar y eliminar
     document.getElementById("lista-cuentas").addEventListener("click", e => {
         const btn = e.target.closest("button[data-accion]"); if (!btn) return;
         if (btn.dataset.accion === "editar-cuenta") editarCuenta(btn.dataset.id);
-        else if (btn.dataset.accion === "eliminar-cuenta") pedirConfirmacion("¿Eliminar cuenta?", async () => { activarBoton(btn, ""); await apiFetch(`/cuentas/${btn.dataset.id}`, { method: "DELETE" }); cargarCuentas(); });
+        else if (btn.dataset.accion === "eliminar-cuenta") pedirConfirmacion("¿Eliminar cuenta?", async () => { activarBoton(btn, "Eliminando..."); await apiFetch(`/cuentas/${btn.dataset.id}`, { method: "DELETE" }); cargarCuentas(); });
     });
     document.getElementById("lista-telefonos").addEventListener("click", e => {
         const btn = e.target.closest("button[data-accion]"); if (!btn) return;
         if (btn.dataset.accion === "editar-tel") editarTelefono(btn.dataset.id);
-        else if (btn.dataset.accion === "eliminar-tel") pedirConfirmacion("¿Eliminar teléfono?", async () => { activarBoton(btn, ""); await apiFetch(`/telefonos/${btn.dataset.id}`, { method: "DELETE" }); cargarTelefonos(); });
+        else if (btn.dataset.accion === "eliminar-tel") pedirConfirmacion("¿Eliminar teléfono?", async () => { activarBoton(btn, "Eliminando..."); await apiFetch(`/telefonos/${btn.dataset.id}`, { method: "DELETE" }); cargarTelefonos(); });
     });
     document.getElementById("lista-notas").addEventListener("click", e => {
         const btn = e.target.closest("button[data-accion]"); if (!btn) return;
         if (btn.dataset.accion === "editar-nota") editarNota(btn.dataset.id);
-        else if (btn.dataset.accion === "eliminar-nota") pedirConfirmacion("¿Eliminar nota?", async () => { activarBoton(btn, ""); await apiFetch(`/notas/${btn.dataset.id}`, { method: "DELETE" }); cargarNotas(); });
+        else if (btn.dataset.accion === "eliminar-nota") pedirConfirmacion("¿Eliminar nota?", async () => { activarBoton(btn, "Eliminando..."); await apiFetch(`/notas/${btn.dataset.id}`, { method: "DELETE" }); cargarNotas(); });
     });
     document.getElementById("lista-recordatorios").addEventListener("click", e => {
         const btn = e.target.closest("button[data-accion]"); if (!btn) return;
         if (btn.dataset.accion === "editar-rec") editarRecordatorio(btn.dataset.id);
-        else if (btn.dataset.accion === "eliminar-rec") pedirConfirmacion("¿Eliminar recordatorio?", async () => { activarBoton(btn, ""); await apiFetch(`/recordatorios/${btn.dataset.id}`, { method: "DELETE" }); cargarRecordatorios(); });
+        else if (btn.dataset.accion === "eliminar-rec") pedirConfirmacion("¿Eliminar recordatorio?", async () => { activarBoton(btn, "Eliminando..."); await apiFetch(`/recordatorios/${btn.dataset.id}`, { method: "DELETE" }); cargarRecordatorios(); });
     });
 
     document.getElementById("btn-cancelar-confirmar").addEventListener("click", () => { cerrarModal("modal-confirmar"); accionConfirmada = null; });

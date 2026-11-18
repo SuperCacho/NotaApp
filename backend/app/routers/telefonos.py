@@ -1,67 +1,65 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.database import supabase
-from app.schemas.telefonos import TelefonoCreate, TelefonoResponse, TelefonoUpdate
+from app.schemas.telefonos import TelefonoCreate, TelefonoUpdate
 from app.services.security import get_current_profile
 
 router = APIRouter(prefix="/telefonos", tags=["telefonos"])
 
 
-@router.get("/", response_model=list[TelefonoResponse])
-def listar_telefonos(profile: dict = Depends(get_current_profile)):
-    try:
-        result = (
-            supabase.table("telefonos")
-            .select("*")
-            .eq("owner_id", profile["id"])
-            .execute()
-        )
-        return result.data or []
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/")
+def get_telefonos(profile: dict = Depends(get_current_profile)):
+    res = (
+        supabase.table("telefonos")
+        .select("*")
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    return res.data
 
 
-@router.post("/", response_model=TelefonoResponse)
-def crear_telefono(req: TelefonoCreate, profile: dict = Depends(get_current_profile)):
-    try:
-        data = {
-            "owner_id": profile["id"],
-            "nombre": req.nombre,
-            "numero": req.numero,
-            "tipo": req.tipo,
-            "descripcion": req.descripcion,
-        }
-        result = supabase.table("telefonos").insert(data).execute()
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.put("/{telefono_id}", response_model=TelefonoResponse)
-def actualizar_telefono(
-    telefono_id: str, req: TelefonoUpdate, profile: dict = Depends(get_current_profile)
+@router.post("/")
+def create_telefono(
+    telefono: TelefonoCreate, profile: dict = Depends(get_current_profile)
 ):
-    try:
-        cambios = req.dict(exclude_unset=True)
-        if not cambios:
-            raise HTTPException(status_code=400, detail="Sin cambios")
-        result = (
-            supabase.table("telefonos")
-            .update(cambios)
-            .eq("id", telefono_id)
-            .eq("owner_id", profile["id"])
-            .execute()
-        )
-        if not result.data:
-            raise HTTPException(status_code=404, detail="No encontrado")
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    data = telefono.model_dump()
+    data["user_id"] = str(profile["id"])
+    res = supabase.table("telefonos").insert(data).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="No se pudo crear el teléfono")
+    return res.data[0]
+
+
+@router.put("/{telefono_id}")
+def update_telefono(
+    telefono_id: str,
+    telefono: TelefonoUpdate,
+    profile: dict = Depends(get_current_profile),
+):
+    existe = (
+        supabase.table("telefonos")
+        .select("id")
+        .eq("id", telefono_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Teléfono no encontrado")
+    data = telefono.model_dump(exclude_unset=True)
+    res = supabase.table("telefonos").update(data).eq("id", telefono_id).execute()
+    return res.data[0]
 
 
 @router.delete("/{telefono_id}")
-def eliminar_telefono(telefono_id: str, profile: dict = Depends(get_current_profile)):
-    supabase.table("telefonos").delete().eq("id", telefono_id).eq(
-        "owner_id", profile["id"]
-    ).execute()
-    return {"message": "Eliminado"}
+def delete_telefono(telefono_id: str, profile: dict = Depends(get_current_profile)):
+    existe = (
+        supabase.table("telefonos")
+        .select("id")
+        .eq("id", telefono_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Teléfono no encontrado")
+    supabase.table("telefonos").delete().eq("id", telefono_id).execute()
+    return {"message": "Teléfono eliminado"}

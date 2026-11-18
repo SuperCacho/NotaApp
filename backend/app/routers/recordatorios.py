@@ -1,82 +1,63 @@
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.database import supabase
-from app.schemas.recordatorios import (
-    RecordatorioCreate,
-    RecordatorioResponse,
-    RecordatorioUpdate,
-)
+from app.schemas.recordatorios import RecordatorioCreate, RecordatorioUpdate
 from app.services.security import get_current_profile
 
 router = APIRouter(prefix="/recordatorios", tags=["recordatorios"])
 
 
-@router.get("/", response_model=list[RecordatorioResponse])
-def listar_recordatorios(profile: dict = Depends(get_current_profile)):
-    try:
-        result = (
-            supabase.table("recordatorios")
-            .select("*")
-            .eq("owner_id", profile["id"])
-            .execute()
-        )
-        return result.data or []
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/")
+def get_recordatorios(profile: dict = Depends(get_current_profile)):
+    res = (
+        supabase.table("recordatorios")
+        .select("*")
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    return res.data
 
 
-@router.post("/", response_model=RecordatorioResponse)
-def crear_recordatorio(
-    req: RecordatorioCreate, profile: dict = Depends(get_current_profile)
+@router.post("/")
+def create_recordatorio(
+    rec: RecordatorioCreate, profile: dict = Depends(get_current_profile)
 ):
-    try:
-        data = {
-            "owner_id": profile["id"],
-            "motivo": req.motivo,
-            "fecha": str(req.fecha),
-            "hora": str(req.hora),
-            "estado": req.estado,
-            "telefono_id": req.telefono_id,
-        }
-        result = supabase.table("recordatorios").insert(data).execute()
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    data = rec.model_dump()
+    data["user_id"] = str(profile["id"])
+    res = supabase.table("recordatorios").insert(data).execute()
+    if not res.data:
+        raise HTTPException(status_code=500, detail="No se pudo crear el recordatorio")
+    return res.data[0]
 
 
-@router.put("/{recordatorio_id}", response_model=RecordatorioResponse)
-def actualizar_recordatorio(
-    recordatorio_id: str,
-    req: RecordatorioUpdate,
-    profile: dict = Depends(get_current_profile),
+@router.put("/{rec_id}")
+def update_recordatorio(
+    rec_id: str, rec: RecordatorioUpdate, profile: dict = Depends(get_current_profile)
 ):
-    try:
-        cambios = req.dict(exclude_unset=True)
-        if "fecha" in cambios:
-            cambios["fecha"] = str(cambios["fecha"])
-        if "hora" in cambios:
-            cambios["hora"] = str(cambios["hora"])
-        if not cambios:
-            raise HTTPException(status_code=400, detail="Sin cambios")
-        result = (
-            supabase.table("recordatorios")
-            .update(cambios)
-            .eq("id", recordatorio_id)
-            .eq("owner_id", profile["id"])
-            .execute()
-        )
-        if not result.data:
-            raise HTTPException(status_code=404, detail="No encontrado")
-        return result.data[0]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    existe = (
+        supabase.table("recordatorios")
+        .select("id")
+        .eq("id", rec_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
+    data = rec.model_dump(exclude_unset=True)
+    res = supabase.table("recordatorios").update(data).eq("id", rec_id).execute()
+    return res.data[0]
 
 
-@router.delete("/{recordatorio_id}")
-def eliminar_recordatorio(
-    recordatorio_id: str, profile: dict = Depends(get_current_profile)
-):
-    supabase.table("recordatorios").delete().eq("id", recordatorio_id).eq(
-        "owner_id", profile["id"]
-    ).execute()
-    return {"message": "Eliminado"}
+@router.delete("/{rec_id}")
+def delete_recordatorio(rec_id: str, profile: dict = Depends(get_current_profile)):
+    existe = (
+        supabase.table("recordatorios")
+        .select("id")
+        .eq("id", rec_id)
+        .eq("user_id", str(profile["id"]))
+        .execute()
+    )
+    if not existe.data:
+        raise HTTPException(status_code=404, detail="Recordatorio no encontrado")
+    supabase.table("recordatorios").delete().eq("id", rec_id).execute()
+    return {"message": "Recordatorio eliminado"}
